@@ -1,0 +1,7 @@
+# output
+UnityIntegration/
+
+# python
+*.pyc
+*.pyo
+*.pyd
