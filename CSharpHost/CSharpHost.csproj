@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <AssemblyName>ScanToMesh</AssemblyName>
+    <TargetFramework>netstandard2.0</TargetFramework>
+	  <OutputPath>out\</OutputPath>
+	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <Nullable>disable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp">
+      <HintPath>dlls\Microsoft.CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Python.Runtime">
+      <HintPath>dlls\pythonnet\Python.Runtime.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

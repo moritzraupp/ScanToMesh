@@ -5,3 +5,8 @@ UnityIntegration/
 *.pyc
 *.pyo
 *.pyd
+
+# CSharpHost
+CSharpHost/.vs/
+CSharpHost/obj/
+CSharpHost/out/

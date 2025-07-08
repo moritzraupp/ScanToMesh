@@ -24,6 +24,10 @@
 - PythonNet  
 - C# development tools  
 
+## PythonNet
+
+This tool uses pythonnet to integrate Python into C#. For more information see [here](CSharpHost/dlls/pythonnet/README.md).
+
 ## Usage
 
 Check out the example scripts and C# samples included in this repo to quickly get started with importing scans, processing data, rendering visuals, and exporting meshes.
