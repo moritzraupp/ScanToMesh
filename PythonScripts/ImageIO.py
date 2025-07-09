@@ -3,11 +3,10 @@ import itk
 import FileStack
 
 
-def print_image_info(image):
+def get_image_info(image):
     size = tuple(image.GetBufferedRegion().GetSize())
     pixel_type, dimension = itk.template(image)[1]
-    print(f"Size: {size}, PixelType: {pixel_type}, Dimension: {dimension}")
-
+    return f"Size: {size}, PixelType: {pixel_type}, Dimension: {dimension}"
 
 def read_image(file_path):
     return itk.imread(file_path)

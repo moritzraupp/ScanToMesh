@@ -1,4 +1,5 @@
 import sys
+sys.path.append("../python_runtime/Lib/site-packages")
 sys.path.append("./")
 sys.path.append("./ImageProcessors")
 
