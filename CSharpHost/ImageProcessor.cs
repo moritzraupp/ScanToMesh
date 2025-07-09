@@ -2,12 +2,15 @@
 using stm;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace stm
 {
-    public class ImageProcessor
+    [Serializable]
+    public class ImageProcessor : PythonModuleObject
     {
+        [Serializable]
         public struct Parameter
         {
             public string name;
@@ -18,7 +21,11 @@ namespace stm
         public List<Parameter> parameters = new List<Parameter>();
 
         private string pythonPath;
-        private bool isValid = false;
+        private bool _isValid = false;
+
+        public bool IsValid() { return _isValid; }
+
+        public string GetPythonPath() { return pythonPath; }
 
         public void SetPythonPath(string pythonPath)
         {
@@ -50,62 +57,67 @@ namespace stm
                     value = param.DefaultValue ?? "",
                 });
             }
+
+            // init py objects for later use
+            DisposeClass();
+            DisposeModule();
+            using (Py.GIL())
+            {
+                string moduleName = System.IO.Path.GetFileNameWithoutExtension(this.pythonPath);
+
+                _module = Py.Import(moduleName);
+
+                if (!_module.HasAttr(name))
+                    throw new Exception($"Module does not contain class {name}");
+
+                _class = _module.GetAttr(name);
+
+                _isValid = true;
+            }
         }
 
-        public void Process(ref PyObject image)
+        public PyObject Process(PyObject image)
         {
             if (string.IsNullOrEmpty(pythonPath))
                 throw new InvalidOperationException("Python path is not set.");
 
-            using (Py.GIL())
+            var args = new List<PyObject>();
+            foreach (var p in parameters)
             {
-                string moduleName = System.IO.Path.GetFileNameWithoutExtension(pythonPath);
+                PyObject val;
 
-                // Load module
-                using (PyObject module = Py.Import(moduleName))
-                {
+                if (int.TryParse(p.value, out int i))
+                    val = new PyInt(i);
+                else if (float.TryParse(p.value, out float f))
+                    val = new PyFloat(f);
+                else
+                    val = new PyString(p.value);
 
-                    // Get class from module
-                    if (!module.HasAttr(name))
-                        throw new Exception($"Module does not contain class {name}");
-
-                    using (PyObject cls = module.GetAttr(name))
-                    {
-                        var args = new List<PyObject>();
-                        foreach (var p in parameters)
-                        {
-                            PyObject val;
-
-                            if (int.TryParse(p.value, out int i))
-                                val = new PyInt(i);
-                            else if (float.TryParse(p.value, out float f))
-                                val = new PyFloat(f);
-                            else
-                                val = new PyString(p.value);
-
-                            args.Add(val);
-                        }
-
-                        // Create instance
-                        using (PyObject instance = cls.Invoke(args.ToArray()))
-                        {
-                            // instance.set_image(image)
-                            instance.InvokeMethod("set_image", image);
-
-                            // image = instance.process()
-                            PyObject processed = instance.InvokeMethod("process");
-                            
-                            image.Dispose(); // Dispose old image if needed
-                            image = processed;
-                            
-                        }
-
-                        // Clean up parameter PyObjects
-                        foreach (var a in args)
-                            a.Dispose();
-                    }
-                }
+                args.Add(val);
             }
+
+            PyObject processed = null;
+
+            // Create instance
+            using (PyObject instance = _class.Invoke(args.ToArray()))
+            {
+                // instance.set_image(image)
+                instance.InvokeMethod("set_image", image);
+
+                // image = instance.process()
+                processed = instance.InvokeMethod("process");    
+            }
+
+            // Clean up parameter PyObjects
+            foreach (var a in args) a.Dispose();
+
+            if (processed == null)
+            {
+                Console.WriteLine("processed is null");
+            }
+
+            return processed;
+
         }
     }
 }
