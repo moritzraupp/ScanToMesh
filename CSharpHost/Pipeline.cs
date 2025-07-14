@@ -1,6 +1,7 @@
 ﻿using Python.Runtime;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace stm
@@ -13,12 +14,24 @@ namespace stm
         public VolumeRenderer volumeRenderer = new VolumeRenderer();
         public ImageInfo ImInfo = new ImageInfo();
         public ImageCopy ImCopy = new ImageCopy();
+        public MeshInfo MshInfo = new MeshInfo();
+
+        public MarchingCubesGenerator MeshGen = new MarchingCubesGenerator();
+        public MeshRenderer meshRenderer = new MeshRenderer();
+        public STLWriter STLWriter = new STLWriter();
+        public OBJWriter OBJWriter = new OBJWriter();
 
         public PyObject image = null;
         public PyObject processedImage = null;
+        public PyObject mesh = null;
 
         public string imageInfo = "null";
         public string processedImageInfo = "null";
+        public string meshInfo = "null";
+
+        public string dataName = "null";
+
+        public string outputFolder = "null";
 
         public void UpdateImageInfo()
         {
@@ -42,10 +55,27 @@ namespace stm
                 processedImageInfo = "null";
             }
         }
+        public void UpdateMeshInfo()
+        {
+            if (mesh != null)
+            {
+                meshInfo = MshInfo.Get(mesh);
+            }
+            else
+            {
+                meshInfo= "null";
+            }
+        }
 
         public void SetFolderPath(string folderPath)
         {
             reader.SetFolderPath(folderPath);
+
+            string folder = reader.GetFolderPath();
+            if (folder != null )
+            {
+                dataName = System.IO.Path.GetFileName(folder);
+            }
         }
 
         public void Read()
@@ -131,6 +161,91 @@ namespace stm
             catch (Exception e) { Console.WriteLine(e.Message); }
         }
 
+        public void GenerateMesh()
+        {
+            try
+            {
+                if (processedImage != null)
+                {
+                    // use processed image
+                    if (mesh != null) mesh.Dispose();
+
+                    mesh = MeshGen.Generate(processedImage);
+                }
+                else
+                {
+                    // use image
+                    if (image == null)
+                    {
+                        Console.WriteLine("No image to perform Mesh Generation");
+                        return;
+                    }
+
+                    if (mesh != null) mesh.Dispose();
+
+                    mesh = MeshGen.Generate(image);
+                }
+
+                UpdateMeshInfo();
+            }
+            catch (PythonException e) { Console.WriteLine(e.Message, e.StackTrace); }
+            catch (Exception e) { Console.Write(e.Message, e.StackTrace); }
+        }
+
+        public void RenderMesh()
+        {
+            try
+            {
+                if (mesh == null)
+                {
+                    Console.WriteLine("No mesh to render");
+                    return;
+                }
+
+                meshRenderer.Render(mesh);
+            }
+            catch (PythonException e) { Console.WriteLine(e.Message, e.StackTrace); }
+            catch (Exception e) { Console.Write(e.Message, e.StackTrace); }
+        }
+
+        public void WriteSTL()
+        {
+            try
+            {
+                if (mesh == null)
+                {
+                    Console.WriteLine("No mesh to write");
+                    return;
+                }
+
+                STLWriter.folderPath = outputFolder;
+                STLWriter.fileName = dataName;
+
+                STLWriter.Write(mesh);
+            }
+            catch (PythonException e) { Console.WriteLine(e.Message, e.StackTrace); }
+            catch (Exception e) { Console.Write(e.Message, e.StackTrace); }
+        }
+
+        public void WriteOBJ()
+        {
+            try
+            {
+                if (mesh == null)
+                {
+                    Console.WriteLine("No mesh to write");
+                    return;
+                }
+
+                OBJWriter.folderPath = outputFolder;
+                OBJWriter.fileName = dataName;
+
+                OBJWriter.Write(mesh);
+            }
+            catch (PythonException e) { Console.WriteLine(e.Message, e.StackTrace); }
+            catch (Exception e) { Console.Write(e.Message, e.StackTrace); }
+        }
+
         public void Dispose()
         {
             try
@@ -150,9 +265,20 @@ namespace stm
                     processedImage.Dispose();
                     processedImage = null;
                 }
+                if (mesh != null)
+                {
+                    mesh.Dispose();
+                    mesh = null;
+                }
 
                 ImInfo.Dispose();
                 ImCopy.Dispose();
+                MshInfo.Dispose();
+
+                MeshGen.Dispose();
+                meshRenderer.Dispose();
+                STLWriter.Dispose();
+                OBJWriter.Dispose();
 
                 reader.Dispose();
                 volumeRenderer.Dispose();
