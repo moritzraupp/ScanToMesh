@@ -10,20 +10,20 @@ class FileStack:
         self.files = self._gather_files()
 
     def _gather_files(self):
-        all_files = []
+        all_files = set()
 
         if self.extensions:
             for ext in self.extensions:
                 pattern = os.path.join(self.directory, f'*{ext}')
-                all_files.extend(glob.glob(pattern))
+                all_files.update(glob.glob(pattern))
         else:
             # No extensions specified: include all files
             all_files = glob.glob(os.path.join(self.directory, '*'))
 
         if self.sort_files:
-            all_files.sort()
+            return sorted(all_files)
 
-        return all_files
+        return list(all_files)
 
     def __len__(self):
         return len(self.files)
