@@ -6,7 +6,6 @@ using System.Text;
 
 namespace stm
 {
-    [Serializable]
     public class Pipeline : IDisposable
     {
         public ImageSeriesReader reader = new ImageSeriesReader();

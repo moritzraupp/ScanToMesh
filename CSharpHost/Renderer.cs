@@ -5,7 +5,6 @@ using Python.Runtime;
 
 namespace stm
 {
-    [Serializable]
     public class VolumeRenderer : PythonModuleObject
     {
         public VolumeRenderer() 

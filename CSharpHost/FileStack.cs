@@ -5,7 +5,6 @@ using System.Text;
 
 namespace stm
 {
-    [Serializable]
     public class FileStack : PythonModuleObject
     {
 
