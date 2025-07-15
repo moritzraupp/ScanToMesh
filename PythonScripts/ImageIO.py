@@ -45,6 +45,12 @@ def get_image_info(image):
     return f"Size: {size}, PixelType: {pixel_type}, Dimension: {dimension}"
 
 
+def copy_image(image):
+    new_image = itk.image_duplicator(image)
+    clone_metadata(image, new_image)
+    return new_image
+
+
 def read_image(file_path):
     image_description = extract_image_descriptions(file_path)
     image = itk.imread(file_path)

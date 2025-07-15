@@ -142,7 +142,7 @@ namespace stm
                 {
                     processedImage.Dispose();
                 }
-                processedImage = image;
+                processedImage = ImCopy.Copy(image);
                 bool changed = false;
                 foreach (ImageProcessor processor in processors)
                 {
@@ -156,6 +156,7 @@ namespace stm
                 }
                 if (!changed)
                 {
+                    if (processedImage == null) processedImage.Dispose();
                     processedImage = null;
                 }
                 UpdatePImageInfo();
@@ -329,8 +330,8 @@ namespace stm
                 }
 
                 ImInfo.Dispose();
-                ImCopy.Dispose();
                 MshInfo.Dispose();
+                ImCopy.Dispose();
                 ImMetadata.Dispose();
 
                 MeshGen.Dispose();
