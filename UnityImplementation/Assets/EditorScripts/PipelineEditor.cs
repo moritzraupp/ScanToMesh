@@ -114,7 +114,7 @@ public class PipelineWindow : EditorWindow
 
     private void DrawImport()
     {
-        showImport = EditorGUILayout.Foldout(showImport, "Import");
+        showImport = EditorGUILayout.Foldout(showImport, "Import", true);
         if (!showImport) return;
 
 
@@ -211,7 +211,7 @@ public class PipelineWindow : EditorWindow
 
     private void DrawProcessors()
     {
-        showProcess = EditorGUILayout.Foldout(showProcess, "Image Processing");
+        showProcess = EditorGUILayout.Foldout(showProcess, "Image Processing", true);
         if (!showProcess) return;
 
         Space();
@@ -374,7 +374,7 @@ public class PipelineWindow : EditorWindow
 
     private void DrawMeshGen()
     {
-        showMeshGeneration = EditorGUILayout.Foldout(showMeshGeneration, "Mesh Generation");
+        showMeshGeneration = EditorGUILayout.Foldout(showMeshGeneration, "Mesh Generation", true);
         if (!showMeshGeneration) return;
 
         Space();
@@ -390,7 +390,7 @@ public class PipelineWindow : EditorWindow
     private void DrawInfos()
     {
 
-        showLoaded = EditorGUILayout.Foldout(showLoaded, "Loaded Data");
+        showLoaded = EditorGUILayout.Foldout(showLoaded, "Loaded Data", true);
         if (!showLoaded) return;
 
         Space();
@@ -447,7 +447,7 @@ public class PipelineWindow : EditorWindow
 
     private void DrawExport()
     {
-        showExport = EditorGUILayout.Foldout(showExport, "Export");
+        showExport = EditorGUILayout.Foldout(showExport, "Export", true);
         if (!showExport) return;
 
         Space();
