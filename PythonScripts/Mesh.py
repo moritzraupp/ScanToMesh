@@ -54,6 +54,7 @@ def smooth_mesh(mesh):
 
 def write_stl(directory, file_name, mesh, reference_image=None):
     path = os.path.join(directory, f"{file_name}.stl")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
 
     stl_writer = vtk.vtkSTLWriter()
     stl_writer.SetInputData(mesh)
@@ -72,6 +73,7 @@ def write_stl(directory, file_name, mesh, reference_image=None):
 
 def write_obj(directory, file_name, mesh, reference_image=None):
     path = os.path.join(directory, f"{file_name}.obj")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
 
     obj_writer = vtk.vtkOBJWriter()
     obj_writer.SetInputData(mesh)
