@@ -13,6 +13,8 @@ public class PipelineWindow : EditorWindow
 {
     public Pipeline pipeline = null; 
 
+    private Vector2 scrollPosition = Vector2.zero;
+
     private List<bool> foldouts = new List<bool>();
 
     private bool showImport = true;
@@ -21,8 +23,8 @@ public class PipelineWindow : EditorWindow
     private bool showLoaded = true;
     private bool showExport = true;
 
-    bool showMetadata = false;
-    Vector2 metadataScrollPosition = Vector2.zero;
+    private bool showMetadata = false;
+    private Vector2 metadataScrollPosition = Vector2.zero;
 
     class UnityTextWriter : TextWriter
     {
@@ -83,6 +85,8 @@ public class PipelineWindow : EditorWindow
 
     private void OnGUI()
     {
+        scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+
         DrawImport();
         DrawSeparator();
 
@@ -96,6 +100,8 @@ public class PipelineWindow : EditorWindow
         DrawSeparator();
 
         DrawExport();
+
+        EditorGUILayout.EndScrollView();
     }
 
     private void DrawImport()
@@ -414,7 +420,7 @@ public class PipelineWindow : EditorWindow
         }
         GUI.enabled = true;
         EditorGUILayout.EndHorizontal();
-        EditorGUILayout.LabelField(pipeline.processedImageInfo);
+        EditorGUILayout.LabelField(pipeline.meshInfo);
 
         Space();
 
