@@ -28,23 +28,9 @@ public class PipelineWindow : EditorWindow
     private bool showMetadata = false;
     private Vector2 metadataScrollPosition = Vector2.zero;
 
-    class UnityTextWriter : TextWriter
-    {
-        public override Encoding Encoding => Encoding.UTF8;
-
-        public override void WriteLine(string value)
-        {
-            Debug.Log(value);
-        }
-
-        public override void Write(string value)
-        {
-            Debug.Log(value);
-        }
-    }
 
 
-    [MenuItem("Tools/ScanToMesh")]
+    [MenuItem("Tools/ScanToMesh/Show Pipeline")]
     public static void ShowWindow()
     {
         GetWindow<PipelineWindow>("Scan To Mesh");
@@ -70,11 +56,20 @@ public class PipelineWindow : EditorWindow
 
     private void OnEnable()
     {
-        Console.SetOut(new UnityTextWriter());
-        Console.SetError(new UnityTextWriter());
+        pipeline = null;
+        EditorApplication.delayCall += SafeInit;
+    }
+
+    private void SafeInit() 
+    { 
+        if (!PythonInteropInit.Initialized())
+        {
+            Debug.LogWarning("Python not initialized yet. Retrying...");
+            EditorApplication.delayCall += SafeInit; // Retry on next frame
+            return;
+        }
 
         pipeline = new Pipeline();
-
         pipeline.outputFolder = "Assets";
     }
 
@@ -92,6 +87,12 @@ public class PipelineWindow : EditorWindow
 
     private void OnGUI()
     {
+        if (pipeline == null)
+        {
+            EditorGUILayout.LabelField("Waiting for Python Engine");
+            return;
+        }
+
         scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
         DrawImport();
