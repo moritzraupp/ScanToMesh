@@ -1,4 +1,4 @@
-# ScanToMesh (stm)
+# ScanToMesh (STM)
 
 **ScanToMesh** is a Python-based bioimaging pipeline tool designed for seamless integration with C# applications via PythonNet. It leverages powerful libraries like **ITK** and **VTK** to import, process, render, and convert high-resolution bioimaging scans into detailed 3D meshes.
 
@@ -15,24 +15,37 @@
 ```
 ScanToMesh/  
 ├── CSharpHost/
-│	├── dlls/						// DLL files that are used by C#, e.g.: Python.Runtime.dll
-│	├── out/						// Output folder for building
+│	├── dlls/				// DLL files that are used by C#, e.g.: Python.Runtime.dll
+│	├── out/				// Output folder for building CSharpHost.csproj
 │	├── CSharpHost.csproj			// Project file to load in IDE and build from
-│	└── *.cs						// C# source files
+│	└── *.cs				// C# source files
 │
 ├── python_runtime/ 				// Standalone Python environment
 │	├── Lib/
 │	│	└── site-packages/
-│	├── python.exe					// Run python from here
+│	├── python.exe				// Run python from here
 │	└── requirements.txt			// requirements file
 │
-├── PythonScripts/					// Source folder for all pythons scripts
+├── PythonScripts/				// Source folder for all pythons scripts
+│	└── PythonDemo.py			// Showcase for python usage
 │
-├── UnityIntegration/
-│	└── ScanToMesh/					// Copy this into YourUnityProject/Assets/
+├── STM_out/
+│	└── ScanToMesh/				// Copy this into your C# project
 │
-├── copy-to-UnityIntegration.bat	// Automation for copying into UnityIntegration/
-├── install-python-requirements.bat	// Autimation for running python requirements install
+├── UnityImplementation/			// Development project for Unity Layer
+│	└── Assets/				
+│		└── EditorScripts/		// Unity Layer scripts
+│		└── ScanToMesh/			// Target of copy_stm_and_unity_to_unity_out.bat
+│
+├── Unity_out/
+│	└── ScanToMesh/				// Copy this into YourUnityProject/Assets/
+│
+│
+├── copy_stm_to_out.bat				// Automation for copying STM into STM_out/
+├── copy_stm_to_unity.bat			// Automation for copying STM into UnityIntegration/Asset/ScanToMesh/
+├── copy_stm_and_unity_to_unity_out.bat		// Automation for copying STM and UnityIntegration/Asset/EditorScripts into Unity_out/ScanToMesh 
+│
+├── install_python_requirements.bat		// Autimation for running python requirements install
 │
 ├── README.md  
 └── .gitignore
@@ -47,18 +60,13 @@ ScanToMesh/
 ```cmd
 python_runtime\python.exe -m pip install -r python_runtime\requirements.txt
 ```
-2. Automated:
-	Run Script: **install-python-requirements.bat**
+2. Automated: Run Script: **install_python_requirements.bat**
 
-### 3. Build C# Project
+## Using STM
+### For standalone **Python** usage see [here](wiki/PY.md).
+### For Standalone **C#** usage see [here](wiki/CS.md).
+### For Using The Tool in **Unity** see [here](wiki/Unity.md).
 
-1. Load **CSharpHost/CSharpHost.csproj**
-2. Build the Project
-
-### 4. Package for Unity
-
-1. Run **copy-to-UnityIntegration.bat**
-2. Copy  whole **ScanToMesh**-folder from **UnityIntegration/** into **YourUnityProject/Assets/**
 
 ## Requirements
 
@@ -80,6 +88,6 @@ python_runtime\python.exe -m pip install -r python_runtime\requirements.txt
 
 [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](#) [![C#](https://custom-icon-badges.demolab.com/badge/C%23-%23239120.svg?logo=cshrp&logoColor=white)](#) [![.NET](https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=fff)](#) [![Unity](https://img.shields.io/badge/Unity-%23000000.svg?logo=unity&logoColor=white)](#)
 
-## Usage
 
-Check out the example scripts and C# samples included in this repo to quickly get started with importing scans, processing data, rendering visuals, and exporting meshes.
+##
+Back to [top](#scantomesh-stm) 
