@@ -97,6 +97,7 @@ namespace stm
         }
     }
 
+    /*
     public class ImageWriter : PythonModuleObject
     {
 
@@ -126,8 +127,8 @@ namespace stm
             }
         }
     }
+    */
 
-    [Serializable]
     public class ImageSeriesReader : PythonModuleObject
     {
 
@@ -208,6 +209,63 @@ namespace stm
             }
 
             return null;
+        }
+    }
+
+    public class ImageSeriesWriter : PythonModuleObject
+    {
+        public string folderPath = null;
+        public string fileName = null;
+        public ImageSeriesWriter ()
+        {
+            string moduleName = "ImageIO";
+            string functionName = "write_image_stack_with_metadata";
+
+            using (Py.GIL())
+            {
+                _module = Py.Import(moduleName);
+                _function = _module.GetAttr(functionName);
+            }
+        }
+
+        public void Write(PyObject image, bool metaFile = true)
+        {
+            if (image == null) { Console.WriteLine("Image is null"); return; }
+            if (folderPath == null) { Console.WriteLine("No folderPath was set"); return; }
+            if (fileName == null) { Console.WriteLine("No fileName was set"); return; }
+
+            string combinedPath = System.IO.Path.Combine(folderPath, fileName);
+
+            using (Py.GIL())
+            {
+                _function.Invoke(new PyString(combinedPath), new PyString(fileName), image, new PyInt(metaFile ? 1 : 0));
+            }
+        }
+
+    }
+
+    public class ImageMetadata : PythonModuleObject
+    {
+        public ImageMetadata()
+        {
+            string moduleName = "ImageIO";
+            string functionName = "get_metadata";
+
+            using (Py.GIL())
+            {
+                _module = Py.Import(moduleName);
+                _function = _module.GetAttr(functionName);
+            }
+        }
+
+        public string Get(PyObject image)
+        {
+            if (image == null) return "null";
+
+            using (Py.GIL())
+            {
+                return _function.Invoke(image).ToString();
+            }
         }
     }
 }

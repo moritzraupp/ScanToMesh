@@ -55,31 +55,18 @@ namespace stm
             }
         }
 
-        public void Write(PyObject mesh)
+        public void Write(PyObject mesh, PyObject refImage = null)
         {
             if (mesh == null) { Console.WriteLine("Mesh is null"); return; }
             if (folderPath == null) { Console.WriteLine("No folderPath was set"); return; }
             if (fileName == null) { Console.WriteLine("No fileName was set"); return; }
-
-            string fileNameWithExtension = fileName;
-
-            if (!fileName.EndsWith(".stl", StringComparison.OrdinalIgnoreCase))
-            {
-                fileNameWithExtension += ".stl";
-            }
-
-            string fullPath = System.IO.Path.Combine(folderPath, fileNameWithExtension).ToString();
-
-            Console.WriteLine($"Output file: {fullPath}");
-            string parentDir = System.IO.Directory.GetParent(fullPath).ToString();
-            if (!System.IO.File.Exists(parentDir)) 
-            {
-                Directory.CreateDirectory(parentDir);
-            }
             
             using (Py.GIL())
             {
-                _function.Invoke(new PyString(fullPath), mesh);
+                if (refImage != null)
+                    _function.Invoke(new PyString(folderPath), new PyString(fileName), mesh, refImage);
+                else
+                    _function.Invoke(new PyString(folderPath), new PyString(fileName), mesh);
             }
         }
     }
@@ -101,31 +88,18 @@ namespace stm
             }
         }
 
-        public void Write(PyObject mesh)
+        public void Write(PyObject mesh, PyObject refImage = null)
         {
             if (mesh == null) { Console.WriteLine("Mesh is null"); return; }
             if (folderPath == null) { Console.WriteLine("No folderPath was set"); return; }
             if (fileName == null) { Console.WriteLine("No fileName was set"); return; }
 
-            string fileNameWithExtension = fileName;
-
-            if (!fileName.EndsWith(".obj", StringComparison.OrdinalIgnoreCase))
-            {
-                fileNameWithExtension += ".obj";
-            }
-
-            string fullPath = System.IO.Path.Combine(folderPath, fileNameWithExtension).ToString();
-
-            Console.WriteLine($"Output file: {fullPath}");
-            string parentDir = System.IO.Directory.GetParent(fullPath).ToString();
-            if (!System.IO.File.Exists(parentDir))
-            {
-                Directory.CreateDirectory(parentDir);
-            }
-
             using (Py.GIL())
             {
-                _function.Invoke(new PyString(fullPath), mesh);
+                if (refImage != null)
+                    _function.Invoke(new PyString(folderPath), new PyString(fileName), mesh, refImage);
+                else
+                    _function.Invoke(new PyString(folderPath), new PyString(fileName), mesh);
             }
         }
     }

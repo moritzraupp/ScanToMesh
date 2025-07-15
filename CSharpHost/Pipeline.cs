@@ -15,11 +15,14 @@ namespace stm
         public ImageInfo ImInfo = new ImageInfo();
         public ImageCopy ImCopy = new ImageCopy();
         public MeshInfo MshInfo = new MeshInfo();
+        public ImageMetadata ImMetadata = new ImageMetadata();
 
         public MarchingCubesGenerator MeshGen = new MarchingCubesGenerator();
         public MeshRenderer meshRenderer = new MeshRenderer();
         public STLWriter STLWriter = new STLWriter();
         public OBJWriter OBJWriter = new OBJWriter();
+        public ImageSeriesWriter writer = new ImageSeriesWriter();
+        public bool writeMetaFile = true;
 
         public PyObject image = null;
         public PyObject processedImage = null;
@@ -28,6 +31,7 @@ namespace stm
         public string imageInfo = "null";
         public string processedImageInfo = "null";
         public string meshInfo = "null";
+        public string imageMetadata = "null";
 
         public string dataName = "null";
 
@@ -66,6 +70,26 @@ namespace stm
                 meshInfo= "null";
             }
         }
+        public void UpdateImageMetadata()
+        {
+            if (processedImage != null)
+            {
+                // use processed image
+                imageMetadata = ImMetadata.Get(processedImage);
+            }
+            else
+            {
+                // use non processed
+                if (image != null)
+                {
+                    imageMetadata = ImMetadata.Get(image);
+                }
+                else
+                {
+                    imageMetadata = "null";
+                }
+            }
+        }
 
         public void SetFolderPath(string folderPath)
         {
@@ -102,8 +126,8 @@ namespace stm
 
                     image = result;
                     UpdateImageInfo();
+                    UpdateImageMetadata();
                 }
-
 
             }
             catch (PythonException e) { Console.WriteLine(e.Message); }
@@ -208,6 +232,39 @@ namespace stm
             catch (Exception e) { Console.Write(e.Message, e.StackTrace); }
         }
 
+        public void WriteImageStack()
+        {
+            try
+            {
+                if (processedImage != null)
+                {
+                    // using processed
+                    writer.fileName = dataName;
+                    writer.folderPath = outputFolder;
+
+                    writer.Write(processedImage, writeMetaFile);
+                }
+                else
+                {
+                    // using non processed
+                    if (image != null)
+                    {
+                        writer.fileName = dataName;
+                        writer.folderPath = outputFolder;
+
+                        writer.Write(image, writeMetaFile);
+                    }
+                    else
+                    {
+                        Console.WriteLine("No Image to write");
+                        return;
+                    }
+                }
+            }
+            catch (PythonException e) { Console.WriteLine(e.Message, e.StackTrace); }
+            catch (Exception e) { Console.Write(e.Message, e.StackTrace); }
+        }
+
         public void WriteSTL()
         {
             try
@@ -221,7 +278,7 @@ namespace stm
                 STLWriter.folderPath = outputFolder;
                 STLWriter.fileName = dataName;
 
-                STLWriter.Write(mesh);
+                STLWriter.Write(mesh, writeMetaFile ? image : null);
             }
             catch (PythonException e) { Console.WriteLine(e.Message, e.StackTrace); }
             catch (Exception e) { Console.Write(e.Message, e.StackTrace); }
@@ -240,7 +297,7 @@ namespace stm
                 OBJWriter.folderPath = outputFolder;
                 OBJWriter.fileName = dataName;
 
-                OBJWriter.Write(mesh);
+                OBJWriter.Write(mesh, writeMetaFile ? image : null);
             }
             catch (PythonException e) { Console.WriteLine(e.Message, e.StackTrace); }
             catch (Exception e) { Console.Write(e.Message, e.StackTrace); }
@@ -274,11 +331,13 @@ namespace stm
                 ImInfo.Dispose();
                 ImCopy.Dispose();
                 MshInfo.Dispose();
+                ImMetadata.Dispose();
 
                 MeshGen.Dispose();
                 meshRenderer.Dispose();
                 STLWriter.Dispose();
                 OBJWriter.Dispose();
+                writer.Dispose();
 
                 reader.Dispose();
                 volumeRenderer.Dispose();
