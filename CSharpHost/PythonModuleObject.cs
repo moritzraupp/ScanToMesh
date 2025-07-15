@@ -12,69 +12,89 @@ namespace stm
 
         private bool _disposed = false;
 
+        ~PythonModuleObject()
+        {
+            Dispose(false); // Don't trust Python in finalizer
+        }
+
         public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
             if (_disposed)
                 return;
 
             _disposed = true;
 
-            // Only dispose if Python is still initialized
-            if (PythonEngine.IsInitialized)
+            if (disposing)
             {
-                DisposeFunction();
-                DisposeInstance();
-                DisposeClass();
-                DisposeModule();
+                // Dispose called manually or by using() block
+                if (PythonEngine.IsInitialized)
+                {
+                    SafeDispose(DisposeFunction);
+                    SafeDispose(DisposeInstance);
+                    SafeDispose(DisposeClass);
+                    SafeDispose(DisposeModule);
+                }
+                else
+                {
+                    NullOut();
+                }
             }
             else
             {
-                // Optionally null out to aid GC
-                _function = null;
-                _instance = null;
-                _class = null;
-                _module = null;
+                // Called from finalizer - never touch Python!
+                NullOut();
             }
-
-            GC.SuppressFinalize(this);
         }
 
-        ~PythonModuleObject() 
+        private void SafeDispose(Action disposeAction)
         {
-            Dispose();
+            try
+            {
+                disposeAction?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                // Replace with UnityEngine.Debug.LogWarning if using Unity
+                Console.WriteLine($"[Warning] Error disposing Python object: {ex}");
+            }
+        }
+
+        private void NullOut()
+        {
+            _function = null;
+            _instance = null;
+            _class = null;
+            _module = null;
         }
 
         public void DisposeModule()
         {
-            if (_module != null)
-            {
-                _module.Dispose();
-                _module = null;
-            }
+            _module?.Dispose();
+            _module = null;
         }
+
         public void DisposeClass()
         {
-            if ( _class != null)
-            {
-                _class.Dispose();
-                _class = null;
-            }
+            _class?.Dispose();
+            _class = null;
         }
+
         public void DisposeInstance()
         {
-            if (_instance != null)
-            { 
-                _instance.Dispose();
-                _instance = null;
-            }
+            _instance?.Dispose();
+            _instance = null;
         }
+
         public void DisposeFunction()
         {
-            if (_function != null)
-            {
-                _function.Dispose();
-                _function = null;
-            }
+            _function?.Dispose();
+            _function = null;
         }
     }
 }

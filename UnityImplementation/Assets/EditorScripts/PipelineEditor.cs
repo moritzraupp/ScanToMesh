@@ -7,6 +7,8 @@ using System.IO;
 using System.Text;
 
 using stm;
+using System.Linq.Expressions;
+using Python.Runtime;
 
 
 public class PipelineWindow : EditorWindow
@@ -50,15 +52,20 @@ public class PipelineWindow : EditorWindow
 
     private void OnDisable()
     {
-        if (pipeline != null)
+        try
         {
-            pipeline.Dispose();
-            pipeline = null;
+            if (pipeline != null)
+            {
+                pipeline.Dispose();
+                pipeline = null;
 
-            GC.Collect();
-            GC.WaitForPendingFinalizers(); 
-            GC.Collect();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            }
         }
+        catch (PythonException e) { Debug.Log(e.Message); }
+        catch (Exception e) { Debug.Log(e.Message); }
     }
 
     private void OnEnable()
@@ -240,6 +247,7 @@ public class PipelineWindow : EditorWindow
                 pipeline.processors.RemoveAt(i);
                 foldouts.RemoveAt(i);
                 EditorGUILayout.EndVertical();
+                EditorGUILayout.EndHorizontal();
                 break;
             }
             EditorGUILayout.EndHorizontal();
