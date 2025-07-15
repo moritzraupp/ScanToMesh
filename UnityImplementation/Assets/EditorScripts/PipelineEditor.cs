@@ -200,7 +200,8 @@ public class PipelineWindow : EditorWindow
                 {
                     pipeline.reader.fileStack.Init();
                 }
-                break; // Important to avoid GUI layout errors
+                EditorGUILayout.EndHorizontal();
+                break;
             }
 
             EditorGUILayout.EndHorizontal();
