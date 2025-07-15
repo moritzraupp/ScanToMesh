@@ -7,7 +7,7 @@ import tifffile
 import FileStack
 
 
-def extract_full_image_descriptions(tiff_path):
+def extract_image_descriptions(tiff_path):
     descriptions = []
     with tifffile.TiffFile(tiff_path) as tif:
         for page in tif.pages:
@@ -27,7 +27,17 @@ def extract_full_image_descriptions(tiff_path):
 
 
 def get_metadata(image: itk.Image):
-    return image["ImageDescription"]
+    meta_dict = image.GetMetaDataDictionary()
+    if meta_dict.HasKey("ImageDescription"):
+        return meta_dict["ImageDescription"]
+    else:
+        return "no metadata"
+
+
+def clone_metadata(from_image, to_image):
+    if from_image is not None and to_image is not None:
+        to_image["ImageDescription"] = get_metadata(from_image)
+
 
 def get_image_info(image):
     size = tuple(image.GetBufferedRegion().GetSize())
@@ -36,7 +46,7 @@ def get_image_info(image):
 
 
 def read_image(file_path):
-    image_description = extract_full_image_descriptions(file_path)
+    image_description = extract_image_descriptions(file_path)
     image = itk.imread(file_path)
     image["ImageDescription"] = image_description
     return image
@@ -55,7 +65,7 @@ def read_image_stack(file_stack: FileStack.FileStack, start_index=0, end_index=N
     image_template = itk.template(probe_image)
     pixel_type, dimension = image_template[1]
 
-    image_description = extract_full_image_descriptions(file_stack[start_index])
+    image_description = extract_image_descriptions(file_stack[start_index])
 
     ImageType = itk.Image[pixel_type, 3]
 
@@ -102,7 +112,7 @@ def write_image_stack(directory: str, base_file_name: str, image: itk.Image, met
     return
 
 
-def write_3d_itk_image_as_tiff_series_with_metadata(directory: str, base_file_name: str, image: itk.Image, meta_file=True):
+def write_image_stack_with_metadata(directory: str, base_file_name: str, image: itk.Image, meta_file=True):
 
     os.makedirs(directory, exist_ok=True)
 

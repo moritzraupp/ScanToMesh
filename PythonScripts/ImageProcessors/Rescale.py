@@ -2,6 +2,7 @@ from ImageProcessor import ImageProcessor
 
 import itk
 
+import ImageIO as io
 
 class RescaleImageFilter(ImageProcessor):
     def __init__(self, out_min=0, out_max=255, out_type=itk.UC):
@@ -29,4 +30,8 @@ class RescaleImageFilter(ImageProcessor):
         rescale.SetOutputMaximum(self.out_max)
         rescale.Update()
 
-        return rescale.GetOutput()
+        rescale_image = rescale.GetOutput()
+
+        io.clone_metadata(input_image, rescale_image)
+
+        return rescale_image

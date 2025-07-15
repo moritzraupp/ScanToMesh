@@ -2,6 +2,7 @@ from ImageProcessor import ImageProcessor
 
 import itk
 
+import ImageIO as io
 
 class ThresholdImageFilter(ImageProcessor):
     def __init__(self, lower=0, upper=255, inside=0, outside=255):
@@ -31,4 +32,8 @@ class ThresholdImageFilter(ImageProcessor):
         threshold_filter.SetOutsideValue(self.outside)
         threshold_filter.Update()
 
-        return threshold_filter.GetOutput()
+        threshold_image = threshold_filter.GetOutput()
+
+        io.clone_metadata(input_image, threshold_image)
+
+        return threshold_image

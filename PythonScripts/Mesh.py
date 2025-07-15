@@ -1,5 +1,9 @@
+import os
+
 import itk
 import vtk
+
+import ImageIO as io
 
 
 class MeshGen:
@@ -35,6 +39,7 @@ def get_mesh_info(mesh):
         f"Center: ({center[0]:.2f}, {center[1]:.2f}, {center[2]:.2f})"
     )
 
+
 def smooth_mesh(mesh):
     smoother = vtk.vtkSmoothPolyDataFilter()
     smoother.SetInputData(mesh)
@@ -47,19 +52,37 @@ def smooth_mesh(mesh):
     return smoother.GetOutput()
 
 
-def write_stl(path, mesh):
+def write_stl(directory, file_name, mesh, reference_image=None):
+    path = os.path.join(directory, f"{file_name}.stl")
+
     stl_writer = vtk.vtkSTLWriter()
     stl_writer.SetInputData(mesh)
     stl_writer.SetFileName(path)
     stl_writer.Write()
 
+    if reference_image is not None:
+        metadata_str = io.get_metadata(reference_image)
+        meta_filename = path + ".meta.txt"
+        os.makedirs(os.path.dirname(meta_filename), exist_ok=True)
+        with open(meta_filename, 'w', encoding='utf-8', newline='') as f:
+            f.write(metadata_str)
+
     return
 
 
-def write_obj(path, mesh):
+def write_obj(directory, file_name, mesh, reference_image=None):
+    path = os.path.join(directory, f"{file_name}.obj")
+
     obj_writer = vtk.vtkOBJWriter()
     obj_writer.SetInputData(mesh)
     obj_writer.SetFileName(path)
     obj_writer.Write()
+
+    if reference_image is not None:
+        metadata_str = io.get_metadata(reference_image)
+        meta_filename = path + ".meta.txt"
+        os.makedirs(os.path.dirname(meta_filename), exist_ok=True)
+        with open(meta_filename, 'w', encoding='utf-8', newline='') as f:
+            f.write(metadata_str)
 
     return

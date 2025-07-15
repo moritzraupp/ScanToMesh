@@ -2,6 +2,7 @@ from ImageProcessor import ImageProcessor
 
 import itk
 
+import ImageIO as io
 
 class ShrinkImageFilter(ImageProcessor):
     def __init__(self, shrink_factor=2):
@@ -24,4 +25,8 @@ class ShrinkImageFilter(ImageProcessor):
         shrink.SetShrinkFactors([self.shrink_factor] * self.dimension)
         shrink.Update()
 
-        return shrink.GetOutput()
+        shrink_image = shrink.GetOutput()
+
+        io.clone_metadata(input_image, shrink_image)
+
+        return shrink_image
