@@ -17,10 +17,12 @@ python_runtime/
 CSharpDemo/
 
 # Unity Implementation
+*.meta
 UnityImplementation/**
 !UnityImplementation/Assets/
 !UnityImplementation/Assets/EditorScripts/
 !UnityImplementation/Assets/EditorScripts/**
+UnityImplementation/Assets/EditorScripts/**.meta
 
 # Output
 STM_out/
