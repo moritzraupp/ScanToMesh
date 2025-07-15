@@ -1,14 +1,12 @@
 using UnityEngine;
 using UnityEditor;
 
-using stm;
-using static UnityEditor.Progress;
-using Unity.VisualScripting.ReorderableList.Internal;
-using UnityEditorInternal;
 using System.Collections.Generic;
 using System;
 using System.IO;
 using System.Text;
+
+using stm;
 
 
 public class PipelineWindow : EditorWindow
@@ -16,6 +14,15 @@ public class PipelineWindow : EditorWindow
     public Pipeline pipeline = null; 
 
     private List<bool> foldouts = new List<bool>();
+
+    private bool showImport = true;
+    private bool showProcess = true;
+    private bool showMeshGeneration = true;
+    private bool showLoaded = true;
+    private bool showExport = true;
+
+    bool showMetadata = false;
+    Vector2 metadataScrollPosition = Vector2.zero;
 
     class UnityTextWriter : TextWriter
     {
@@ -57,20 +64,49 @@ public class PipelineWindow : EditorWindow
         Console.SetOut(new UnityTextWriter());
         Console.SetError(new UnityTextWriter());
 
-        pipeline = new Pipeline(); 
+        pipeline = new Pipeline();
+
+        pipeline.outputFolder = "Assets";
+    }
+
+    private void Space(int spacing) { EditorGUILayout.Space(spacing); }
+    private void Space() { EditorGUILayout.Space(); }
+
+    private void DrawSeparator()
+    {
+        Space();
+        Rect rect = EditorGUILayout.GetControlRect(false, 1);
+        rect.height = 1;
+
+        EditorGUI.DrawRect(rect, Color.gray);
     }
 
     private void OnGUI()
-    { 
-        DrawReaderUI();
-        DrawProcessorsUI();
-        DrawImageInfos();
+    {
+        DrawImport();
+        DrawSeparator();
+
+        DrawProcessors();
+        DrawSeparator();
+
+        DrawMeshGen();
+        DrawSeparator();
+
+        DrawInfos();
+        DrawSeparator();
+
+        DrawExport();
     }
 
-    private void DrawReaderUI()
+    private void DrawImport()
     {
-        EditorGUILayout.LabelField("Image Series Reader", EditorStyles.boldLabel);
+        showImport = EditorGUILayout.Foldout(showImport, "Import");
+        if (!showImport) return;
 
+
+        Space(); // Image Stack selection
+
+        EditorGUILayout.LabelField("Select Image Stack", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
         string oldFolderPath = pipeline.reader.GetFolderPath();
         string newFolderPath = EditorGUILayout.TextField("Folder Path", oldFolderPath);
@@ -86,11 +122,19 @@ public class PipelineWindow : EditorWindow
             string folder = EditorUtility.OpenFolderPanel("Choose Folder", "", "");
             if (!string.IsNullOrEmpty(folder))
             {
-               pipeline.SetFolderPath(folder);
+                pipeline.SetFolderPath(folder);
             }
         }
         EditorGUILayout.EndHorizontal();
+
+
+        Space(); // File Extension selection
+
         DrawExtensionsUI();
+
+
+        Space(); // Final Import Stage
+
         EditorGUILayout.LabelField("Number of Files:", pipeline.reader.fileStack.Count().ToString());
 
         EditorGUILayout.BeginHorizontal();
@@ -98,12 +142,13 @@ public class PipelineWindow : EditorWindow
         pipeline.reader.endIndex = EditorGUILayout.IntField("End Index", pipeline.reader.endIndex);
         EditorGUILayout.EndHorizontal();
 
+        GUI.enabled = pipeline.reader.fileStack.Count() > 0;
         if (GUILayout.Button("Read Images"))
         {
             pipeline.Read();
         }
+        GUI.enabled = true;
     }
-
     private void DrawExtensionsUI()
     {
         var extensions = pipeline.reader.fileStack._extensions;
@@ -149,10 +194,22 @@ public class PipelineWindow : EditorWindow
         }
     }
 
-    private void DrawProcessorsUI()
+    private void DrawProcessors()
     {
-        EditorGUILayout.Space(10);
-        EditorGUILayout.LabelField("Image Processors", EditorStyles.boldLabel);
+        showProcess = EditorGUILayout.Foldout(showProcess, "Image Processing");
+        if (!showProcess) return;
+
+        Space();
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("image Processors", EditorStyles.boldLabel);
+        if (GUILayout.Button("Add Processor"))
+        {
+            pipeline.processors.Add(new stm.ImageProcessor());
+        }
+        EditorGUILayout.EndHorizontal();
+
+        Space();
 
         var processors = pipeline.processors;
 
@@ -163,12 +220,23 @@ public class PipelineWindow : EditorWindow
         while (foldouts.Count > processors.Count) 
             foldouts.RemoveAt(foldouts.Count - 1);
 
-        for (int i = 0; i < processors.Count; i++)
+        for (int i = 0; i < processors.Count; i++) 
         {
             var proc = processors[i];
 
             EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.BeginHorizontal();
             foldouts[i] = EditorGUILayout.Foldout(foldouts[i], $"Processor {i + 1}: {proc.name ?? "(unnamed)"}", true);
+
+            // Remove
+            if (GUILayout.Button("Remove", GUILayout.Width(90)))
+            {
+                pipeline.processors.RemoveAt(i);
+                foldouts.RemoveAt(i);
+                EditorGUILayout.EndVertical();
+                break;
+            }
+            EditorGUILayout.EndHorizontal();
 
             if (foldouts[i])
             {
@@ -198,30 +266,20 @@ public class PipelineWindow : EditorWindow
                         proc.parameters[p] = new stm.ImageProcessor.Parameter { name = param.name, value = newValue };
                 }
 
-                // Remove
-                if (GUILayout.Button("Remove Processor"))
-                {
-                    pipeline.processors.RemoveAt(i);
-                    foldouts.RemoveAt(i);
-                    EditorGUILayout.EndVertical();
-                    break;
-                }
             }
 
             EditorGUILayout.EndVertical();
         }
 
-        if (GUILayout.Button("Add Processor"))
-        {
-            pipeline.processors.Add(new stm.ImageProcessor());
-        }
+        Space();
 
+        GUI.enabled = pipeline.image != null;
         if (GUILayout.Button("Run Pipeline"))
         {
             pipeline.Process();
         }
+        GUI.enabled = true;
     }
-
     private string DrawPythonPathField(string currentPath, ImageProcessor processor)
     {
         EditorGUILayout.BeginHorizontal();
@@ -241,7 +299,6 @@ public class PipelineWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
         return result;
     }
-
     private void HandleProcessorDND(Rect dropArea, ImageProcessor processor)
     {
         if (processor == null) return;
@@ -299,39 +356,118 @@ public class PipelineWindow : EditorWindow
         }
     }
 
-
-    private void DrawImageInfos()
+    private void DrawMeshGen()
     {
-        EditorGUILayout.Space();
+        showMeshGeneration = EditorGUILayout.Foldout(showMeshGeneration, "Mesh Generation");
+        if (!showMeshGeneration) return;
 
+        Space();
+
+        pipeline.MeshGen.isoVal = EditorGUILayout.FloatField("Iso Value", pipeline.MeshGen.isoVal);
+        if (GUILayout.Button("Generate"))
+        {
+            pipeline.GenerateMesh();
+        }
+    }
+
+
+    private void DrawInfos()
+    {
+
+        showLoaded = EditorGUILayout.Foldout(showLoaded, "Loaded Data");
+        if (!showLoaded) return;
+
+        Space();
 
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Loaded Image", EditorStyles.boldLabel);
-        EditorGUI.BeginDisabledGroup(pipeline.image == null);
+        GUI.enabled = pipeline.image != null;
         if (GUILayout.Button("Render"))
         {
             pipeline.Render();
         }
-        EditorGUI.EndDisabledGroup();
+        GUI.enabled = true;
         EditorGUILayout.EndHorizontal();
-
         EditorGUILayout.LabelField(pipeline.imageInfo);
 
-        EditorGUILayout.Space();
-
-
+        Space();
 
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Processed Image", EditorStyles.boldLabel);
-        GUI.enabled = pipeline.image != null;
+        GUI.enabled = pipeline.processedImage != null;
         if (GUILayout.Button("Render"))
         {
             pipeline.RenderProcessed();
         }
         GUI.enabled = true;
         EditorGUILayout.EndHorizontal();
-
         EditorGUILayout.LabelField(pipeline.processedImageInfo);
+
+        Space();
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Mesh", EditorStyles.boldLabel);
+        GUI.enabled = pipeline.mesh != null;
+        if (GUILayout.Button("Render"))
+        {
+            pipeline.RenderMesh();
+        }
+        GUI.enabled = true;
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.LabelField(pipeline.processedImageInfo);
+
+        Space();
+
+        EditorGUI.indentLevel++;
+        showMetadata = EditorGUILayout.Foldout(showMetadata, "Image Metadata");
+        if (showMetadata)
+        {
+            metadataScrollPosition = EditorGUILayout.BeginScrollView(metadataScrollPosition, GUILayout.Height(150));
+            EditorGUILayout.TextArea(pipeline.imageMetadata, GUILayout.ExpandHeight(true));
+            EditorGUILayout.EndScrollView();
+        }
+        EditorGUI.indentLevel--;
+    }
+
+    private void DrawExport()
+    {
+        showExport = EditorGUILayout.Foldout(showExport, "Export");
+        if (!showExport) return;
+
+        Space();
+
+        pipeline.outputFolder = EditorGUILayout.TextField("Output Folder", pipeline.outputFolder);
+        pipeline.dataName = EditorGUILayout.TextField("Data Name", pipeline.dataName);
+        pipeline.writeMetaFile = EditorGUILayout.Toggle("Write Meta File", pipeline.writeMetaFile);
+
+        Space();
+
+        EditorGUILayout.LabelField("Export Image Stack");
+        GUI.enabled = pipeline.processedImage != null || pipeline.image != null;
+        if (GUILayout.Button("Save as TIFF Stack"))
+        {
+            pipeline.WriteImageStack();
+            AssetDatabase.Refresh();
+        }
+        GUI.enabled = true;
+
+        Space();
+
+        EditorGUILayout.LabelField("Export Mesh");
+        GUI.enabled = pipeline.mesh != null;
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Save as STL"))
+        {
+            pipeline.WriteSTL();
+            AssetDatabase.Refresh();
+        }
+        if (GUILayout.Button("Save as OBJ"))
+        {
+            pipeline.WriteOBJ();
+            AssetDatabase.Refresh();
+        }
+        GUI.enabled = true;
+        EditorGUILayout.EndHorizontal();
     }
 
 }
