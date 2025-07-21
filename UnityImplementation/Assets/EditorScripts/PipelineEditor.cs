@@ -3,11 +3,8 @@ using UnityEditor;
 
 using System.Collections.Generic;
 using System;
-using System.IO;
-using System.Text;
 
 using stm;
-using System.Linq.Expressions;
 using Python.Runtime;
 
 
@@ -20,10 +17,10 @@ public class PipelineWindow : EditorWindow
     private List<bool> foldouts = new List<bool>();
 
     private bool showImport = true;
-    private bool showProcess = true;
-    private bool showMeshGeneration = true;
-    private bool showLoaded = true;
-    private bool showExport = true;
+    private bool showProcess = false;
+    private bool showMeshGeneration = false;
+    private bool showLoaded = false;
+    private bool showExport = false;
 
     private bool showMetadata = false;
     private Vector2 metadataScrollPosition = Vector2.zero;
@@ -123,7 +120,7 @@ public class PipelineWindow : EditorWindow
         EditorGUILayout.LabelField("Select Image Stack", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
         string oldFolderPath = pipeline.reader.GetFolderPath();
-        string newFolderPath = EditorGUILayout.TextField("Folder Path", oldFolderPath);
+        string newFolderPath = EditorGUILayout.TextField(new GUIContent("Folder Path", "Select to path to your image stack folder"), oldFolderPath);
         if (newFolderPath != oldFolderPath)
         {
             pipeline.SetFolderPath(newFolderPath);
@@ -131,7 +128,7 @@ public class PipelineWindow : EditorWindow
         Rect dropArea = GUILayoutUtility.GetLastRect();
         HandleFolderDND(dropArea);
 
-        if (GUILayout.Button("...", GUILayout.Width(20)))
+        if (GUILayout.Button(new GUIContent("...", "Brows files"), GUILayout.Width(20)))
         {
             string folder = EditorUtility.OpenFolderPanel("Choose Folder", "", "");
             if (!string.IsNullOrEmpty(folder))
@@ -152,14 +149,18 @@ public class PipelineWindow : EditorWindow
         EditorGUILayout.LabelField("Number of Files:", pipeline.reader.fileStack.Count().ToString());
 
         EditorGUILayout.BeginHorizontal();
-        pipeline.reader.startIndex = EditorGUILayout.IntField("Start Index", pipeline.reader.startIndex);
-        pipeline.reader.endIndex = EditorGUILayout.IntField("End Index", pipeline.reader.endIndex);
+        pipeline.reader.startIndex = EditorGUILayout.IntField(new GUIContent("Start Index", "Select the range of the stack you want to import"), pipeline.reader.startIndex);
+        pipeline.reader.endIndex = EditorGUILayout.IntField(new GUIContent("End Index", "Select the range of the stack you want to import"), pipeline.reader.endIndex);
         EditorGUILayout.EndHorizontal();
 
         GUI.enabled = pipeline.reader.fileStack.Count() > 0;
-        if (GUILayout.Button("Read Images"))
+        if (GUILayout.Button(new GUIContent("Read Images", "Import the image stack you selected")))
         {
             pipeline.Read();
+            if (pipeline.image != null)
+            {
+                showLoaded = true;
+            }
         }
         GUI.enabled = true;
     }
@@ -168,7 +169,7 @@ public class PipelineWindow : EditorWindow
         var extensions = pipeline.reader.fileStack._extensions;
 
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Accepted File Extensions", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(new GUIContent("Accepted File Extensions", "Select file extensions, you want to limit to (e.g.: \".tif\")\nLeave empty, if you do not want to filter"), EditorStyles.boldLabel);
         if (GUILayout.Button("+ Add Extension"))
         {
             extensions.Add(""); // Add a new empty entry
@@ -183,7 +184,7 @@ public class PipelineWindow : EditorWindow
             EditorGUILayout.BeginHorizontal();
 
             string oldExtension = extensions[i];
-            string newExtension = EditorGUILayout.TextField($"Extension {i + 1}", extensions[i]);
+            string newExtension = EditorGUILayout.TextField(new GUIContent($"Extension {i + 1}", "Enter extension (e.g.: \".tif\")"), extensions[i]);
             if (newExtension != oldExtension)
             {
                 extensions[i] = newExtension;
@@ -194,7 +195,7 @@ public class PipelineWindow : EditorWindow
                 }
             }
 
-            if (GUILayout.Button("-", GUILayout.Width(25)))
+            if (GUILayout.Button(new GUIContent("-", "Remove entry"), GUILayout.Width(25)))
             {
                 extensions.RemoveAt(i);
                 if (pipeline.reader.fileStack.IsInitialized())
@@ -217,8 +218,8 @@ public class PipelineWindow : EditorWindow
         Space();
 
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("image Processors", EditorStyles.boldLabel);
-        if (GUILayout.Button("Add Processor"))
+        EditorGUILayout.LabelField(new GUIContent("Image Processors", "Add image processor steps"), EditorStyles.boldLabel);
+        if (GUILayout.Button(new GUIContent("Add Processor", "Add ImageProcessor step")))
         {
             pipeline.processors.Add(new stm.ImageProcessor());
         }
@@ -244,7 +245,7 @@ public class PipelineWindow : EditorWindow
             foldouts[i] = EditorGUILayout.Foldout(foldouts[i], $"Processor {i + 1}: {proc.name ?? "(unnamed)"}", true);
 
             // Remove
-            if (GUILayout.Button("Remove", GUILayout.Width(90)))
+            if (GUILayout.Button(new GUIContent("Remove", "Remove enty"), GUILayout.Width(90)))
             {
                 pipeline.processors.RemoveAt(i);
                 foldouts.RemoveAt(i);
@@ -290,22 +291,26 @@ public class PipelineWindow : EditorWindow
         Space();
 
         GUI.enabled = pipeline.image != null;
-        if (GUILayout.Button("Run Pipeline"))
+        if (GUILayout.Button(new GUIContent("Run Pipeline", "Run pipeline with all Image Processors above")))
         {
             pipeline.Process();
+            if (pipeline.processedImage != null)
+            {
+                showLoaded = true;
+            }
         }
         GUI.enabled = true;
     }
     private string DrawPythonPathField(string currentPath, ImageProcessor processor)
     {
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Python File", GUILayout.Width(80));
+        EditorGUILayout.LabelField(new GUIContent("Python File", "Select a python file, that is an ImageProcessor class"), GUILayout.Width(80));
         string result = EditorGUILayout.TextField(currentPath);
 
         Rect dropArea = GUILayoutUtility.GetLastRect();
         HandleProcessorDND(dropArea, processor);
 
-        if (GUILayout.Button("...", GUILayout.Width(30)))
+        if (GUILayout.Button(new GUIContent("...", "Browse files"), GUILayout.Width(30)))
         {
             string selected = EditorUtility.OpenFilePanel("Choose Python Script", "", "py");
             if (!string.IsNullOrEmpty(selected))
@@ -379,10 +384,14 @@ public class PipelineWindow : EditorWindow
 
         Space();
 
-        pipeline.MeshGen.isoVal = EditorGUILayout.FloatField("Iso Value", pipeline.MeshGen.isoVal);
-        if (GUILayout.Button("Generate"))
+        pipeline.MeshGen.isoVal = EditorGUILayout.FloatField(new GUIContent("Iso Value", "Iso Value for marching cubes algorithm"), pipeline.MeshGen.isoVal);
+        if (GUILayout.Button(new GUIContent("Generate", "Generate a mesh by using marching cubes algorithm")))
         {
             pipeline.GenerateMesh();
+            if (pipeline.mesh != null)
+            {
+                showLoaded = true;
+            }
         }
     }
 
@@ -395,10 +404,12 @@ public class PipelineWindow : EditorWindow
 
         Space();
 
+        //pipeline.image == null ? Color.gray : Color.green;
+
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Loaded Image", EditorStyles.boldLabel);
         GUI.enabled = pipeline.image != null;
-        if (GUILayout.Button("Render"))
+        if (GUILayout.Button(new GUIContent("Render", "Show a 3D view of the imported image")))
         {
             pipeline.Render();
         }
@@ -411,7 +422,7 @@ public class PipelineWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Processed Image", EditorStyles.boldLabel);
         GUI.enabled = pipeline.processedImage != null;
-        if (GUILayout.Button("Render"))
+        if (GUILayout.Button(new GUIContent("Render", "Show a 3D view of the processed image")))
         {
             pipeline.RenderProcessed();
         }
@@ -424,7 +435,7 @@ public class PipelineWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Mesh", EditorStyles.boldLabel);
         GUI.enabled = pipeline.mesh != null;
-        if (GUILayout.Button("Render"))
+        if (GUILayout.Button(new GUIContent("Render", "Show a 3D view of the generated mesh")))
         {
             pipeline.RenderMesh();
         }
@@ -435,11 +446,11 @@ public class PipelineWindow : EditorWindow
         Space();
 
         EditorGUI.indentLevel++;
-        showMetadata = EditorGUILayout.Foldout(showMetadata, "Image Metadata");
+        showMetadata = EditorGUILayout.Foldout(showMetadata, new GUIContent("Image Metadata", "Metadata that was attached to the image file(s)"));
         if (showMetadata)
         {
             metadataScrollPosition = EditorGUILayout.BeginScrollView(metadataScrollPosition, GUILayout.Height(150));
-            EditorGUILayout.TextArea(pipeline.imageMetadata, GUILayout.ExpandHeight(true));
+            pipeline.imageMetadata = EditorGUILayout.TextArea(pipeline.imageMetadata, GUILayout.ExpandHeight(true));
             EditorGUILayout.EndScrollView();
         }
         EditorGUI.indentLevel--;
@@ -452,15 +463,15 @@ public class PipelineWindow : EditorWindow
 
         Space();
 
-        pipeline.outputFolder = EditorGUILayout.TextField("Output Folder", pipeline.outputFolder);
-        pipeline.dataName = EditorGUILayout.TextField("Data Name", pipeline.dataName);
-        pipeline.writeMetaFile = EditorGUILayout.Toggle("Write Meta File", pipeline.writeMetaFile);
+        pipeline.outputFolder = EditorGUILayout.TextField(new GUIContent("Output Folder", "The output folder, where the files are written to"), pipeline.outputFolder);
+        pipeline.dataName = EditorGUILayout.TextField(new GUIContent("Data Name", "Name of the data-set, used for the export name, e.g.:\nData Name: \"BrainVessel\"\nOutput: \"BrainVessel.obj\""), pipeline.dataName);
+        pipeline.writeMetaFile = EditorGUILayout.Toggle(new GUIContent("Write Meta File", "Write the Image Metadata to a seperate .meta.txt file"), pipeline.writeMetaFile);
 
         Space();
 
         EditorGUILayout.LabelField("Export Image Stack");
         GUI.enabled = pipeline.processedImage != null || pipeline.image != null;
-        if (GUILayout.Button("Save as TIFF Stack"))
+        if (GUILayout.Button(new GUIContent("Save as TIFF Stack", "Write the image to a series of .tif files")))
         {
             pipeline.WriteImageStack();
             AssetDatabase.Refresh();
@@ -472,12 +483,12 @@ public class PipelineWindow : EditorWindow
         EditorGUILayout.LabelField("Export Mesh");
         GUI.enabled = pipeline.mesh != null;
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Save as STL"))
+        if (GUILayout.Button(new GUIContent("Save as STL", "Write the mesh to a .stl file")))
         {
             pipeline.WriteSTL();
             AssetDatabase.Refresh();
         }
-        if (GUILayout.Button("Save as OBJ"))
+        if (GUILayout.Button(new GUIContent("Save as OBJ", "Write the mesh to a .obj file")))
         {
             pipeline.WriteOBJ();
             AssetDatabase.Refresh();
