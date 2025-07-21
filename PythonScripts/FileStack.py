@@ -1,7 +1,6 @@
 import os
 import glob
 
-
 class FileStack:
     def __init__(self, directory, extensions=None, sort_files=False):
         self.directory = directory
@@ -10,15 +9,19 @@ class FileStack:
         self.files = self._gather_files()
 
     def _gather_files(self):
-        all_files = set()
+        allowed_exts = set(ext.lower() for ext in self.extensions) if self.extensions else None
+        all_files = []
 
-        if self.extensions:
-            for ext in self.extensions:
-                pattern = os.path.join(self.directory, f'*{ext}')
-                all_files.update(glob.glob(pattern))
-        else:
-            # No extensions specified: include all files
-            all_files = glob.glob(os.path.join(self.directory, '*'))
+        for entry in os.listdir(self.directory):
+            full_path = os.path.join(self.directory, entry)
+            if not os.path.isfile(full_path):
+                continue
+
+            _, ext = os.path.splitext(entry)
+            if allowed_exts and ext.lower() not in allowed_exts:
+                continue
+
+            all_files.append(full_path)
 
         if self.sort_files:
             return sorted(all_files)
