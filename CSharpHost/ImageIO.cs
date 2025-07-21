@@ -97,38 +97,6 @@ namespace stm
         }
     }
 
-    /*
-    public class ImageWriter : PythonModuleObject
-    {
-
-        public ImageWriter()
-        {
-            string moduleName = "ImageIO";
-            string functionName = "write_image";
-
-            using (Py.GIL())
-            {
-                _module = Py.Import(moduleName);
-                _function = _module.GetAttr(functionName);
-            }
-        }
-        public string filePath;
-        public void Write(ref PyObject image) 
-        {
-            if (filePath == null)
-            {
-                Console.WriteLine("ImageReader was called without a specifying a file");
-                return;
-            }
-
-            using (Py.GIL())
-            {
-                _function.Invoke(new PyTuple(new PyObject[] { new PyString(filePath), image}));
-            }
-        }
-    }
-    */
-
     public class ImageSeriesReader : PythonModuleObject
     {
 

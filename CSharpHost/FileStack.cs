@@ -1,7 +1,6 @@
 ﻿using Python.Runtime;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace stm
 {
@@ -82,7 +81,7 @@ namespace stm
 
                 // Clean up
                 foreach (var pyStr in extensionStrings) pyStr.Dispose();
-                extensions.Dispose();  // Dispose the list object itself
+                extensions.Dispose(); 
                 foreach (var arg in args) arg.Dispose();
             }
         }

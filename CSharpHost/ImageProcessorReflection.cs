@@ -1,7 +1,5 @@
 ﻿using Python.Runtime;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace stm
 {
@@ -24,14 +22,12 @@ namespace stm
         {
             using (Py.GIL())
             {
-                // Import python python module
                 string moduleName = "MetaReader";
                 string functionName = "get_class_params_from_file";
                 using (PyObject module = Py.Import(moduleName))
                 {
                     using (PyObject func = module.GetAttr(functionName))
                     {
-                        // Call function
                         using (PyObject pyResult = func.Invoke(new PyTuple(new PyObject[] { new PyString(scriptPath) })))
                         {
                             // Extract class_name

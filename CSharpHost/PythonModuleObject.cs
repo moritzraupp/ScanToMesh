@@ -60,7 +60,6 @@ namespace stm
             }
             catch (Exception ex)
             {
-                // Replace with UnityEngine.Debug.LogWarning if using Unity
                 Console.WriteLine($"[Warning] Error disposing Python object: {ex}");
             }
         }

@@ -58,7 +58,7 @@ namespace stm
                 });
             }
 
-            // init py objects for later use
+            
             DisposeClass();
             DisposeModule();
             using (Py.GIL())
@@ -101,14 +101,11 @@ namespace stm
             // Create instance
             using (PyObject instance = _class.Invoke(args.ToArray()))
             {
-                // instance.set_image(image)
                 instance.InvokeMethod("set_image", image);
 
-                // image = instance.process()
                 processed = instance.InvokeMethod("process");    
             }
 
-            // Clean up parameter PyObjects
             foreach (var a in args) a.Dispose();
 
             if (processed == null)
