@@ -9,6 +9,9 @@ namespace stm
     public class MarchingCubesGenerator : PythonModuleObject
     {
         public float isoVal = 255;
+        private string _outString = "";
+
+        public string OutString { get { return _outString; } }
         public MarchingCubesGenerator()
         {
             string moduleName = "Mesh";
@@ -30,6 +33,7 @@ namespace stm
             {
                 using(PyObject iso = new PyFloat(isoVal))
                 {
+                    _outString = "[Marching Cubes]\n" + $"\tiso value = {isoVal}";
                     PyObject result = _function.Invoke(image, iso);
                     return result;
                 }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace stm
 {
@@ -15,6 +16,7 @@ namespace stm
         public ImageCopy ImCopy = new ImageCopy();
         public MeshInfo MshInfo = new MeshInfo();
         public ImageMetadata ImMetadata = new ImageMetadata();
+        public ImageMetadataSetter ImMetaSetter = new ImageMetadataSetter();
 
         public MarchingCubesGenerator MeshGen = new MarchingCubesGenerator();
         public MeshRenderer meshRenderer = new MeshRenderer();
@@ -71,7 +73,7 @@ namespace stm
         }
         public void UpdateImageMetadata()
         {
-            if (processedImage != null)
+            if (processedImage != null & false) // nnn
             {
                 // use processed image
                 imageMetadata = ImMetadata.Get(processedImage);
@@ -87,6 +89,52 @@ namespace stm
                 {
                     imageMetadata = "null";
                 }
+            }
+        }
+
+        private void ClearMetadata_ImageProcessing()
+        {
+            string pattern = @"((?:\s*\r?\n){0,2})?\[Image Processing Start\].*?\[Image Processing End\]";
+            imageMetadata = Regex.Replace(imageMetadata, pattern, string.Empty, RegexOptions.Singleline);
+        }
+        private void ClearMetadata_MeshGen()
+        {
+            string pattern = @"((?:\s*\r?\n){0,2})?\[Mesh Generation Start\].*?\[Mesh Generation End\]";
+            imageMetadata = Regex.Replace(imageMetadata, pattern, string.Empty, RegexOptions.Singleline);
+        }
+        private void AddMetadata_ImageProcessing(string metadata)
+        {
+            if (metadata == null) return;
+            ClearMetadata_ImageProcessing();
+
+            string stringToAdd = "\n\n[Image Processing Start]\n" + metadata + "\n[Image Processing End]\n";
+            imageMetadata += stringToAdd;
+        }
+        private void AddMetadata_MeshGen(string metadata)
+        {
+            if (metadata == null) return;
+            ClearMetadata_MeshGen();
+
+            string stringToAdd = "\n\n[Mesh Generation Start]\n" + metadata + "\n[Mesh Generation End]\n";
+            imageMetadata += stringToAdd;
+        }
+
+        public void ClearLoaded()
+        {
+            if (mesh != null)
+            {
+                mesh.Dispose();
+                mesh = null;
+            }
+            if (processedImage != null)
+            {
+                processedImage.Dispose();
+                processedImage = null;
+            }
+            if (image != null)
+            {
+                image.Dispose();
+                image = null;
             }
         }
 
@@ -120,6 +168,8 @@ namespace stm
                 }
                 else
                 {
+                    ClearLoaded();
+
                     if (image != null)
                     image.Dispose();
 
@@ -143,6 +193,7 @@ namespace stm
                 }
                 processedImage = ImCopy.Copy(image);
                 bool changed = false;
+                string metadata = "";
                 foreach (ImageProcessor processor in processors)
                 {
                     if (!processor.IsValid())
@@ -152,11 +203,17 @@ namespace stm
                     }
                     changed = true;
                     processedImage = processor.Process(processedImage);
+
+                    metadata += processor.OutString + "\n";
                 }
                 if (!changed)
                 {
                     if (processedImage == null) processedImage.Dispose();
                     processedImage = null;
+                }
+                else
+                {
+                    AddMetadata_ImageProcessing(metadata);
                 }
                 UpdatePImageInfo();
             }
@@ -195,6 +252,7 @@ namespace stm
                     if (mesh != null) mesh.Dispose();
 
                     mesh = MeshGen.Generate(processedImage);
+                    AddMetadata_MeshGen(MeshGen.OutString);
                 }
                 else
                 {
@@ -208,12 +266,26 @@ namespace stm
                     if (mesh != null) mesh.Dispose();
 
                     mesh = MeshGen.Generate(image);
+                    AddMetadata_MeshGen(MeshGen.OutString);
                 }
 
                 UpdateMeshInfo();
             }
             catch (PythonException e) { Console.WriteLine(e.Message, e.StackTrace); }
             catch (Exception e) { Console.Write(e.Message, e.StackTrace); }
+        }
+
+        private void UpdateMetaData()
+        {
+            if (imageMetadata == null) return;
+            if (image != null)
+            {
+                ImMetaSetter.Set(image, imageMetadata);
+            }
+            if (processedImage != null)
+            {
+                ImMetaSetter.Set(processedImage, imageMetadata);
+            }
         }
 
         public void RenderMesh()
@@ -234,6 +306,7 @@ namespace stm
 
         public void WriteImageStack()
         {
+            UpdateMetaData();
             try
             {
                 if (processedImage != null)
@@ -267,6 +340,7 @@ namespace stm
 
         public void WriteSTL()
         {
+            UpdateMetaData();
             try
             {
                 if (mesh == null)
@@ -286,6 +360,7 @@ namespace stm
 
         public void WriteOBJ()
         {
+            UpdateMetaData();
             try
             {
                 if (mesh == null)
@@ -332,6 +407,7 @@ namespace stm
                 MshInfo.Dispose();
                 ImCopy.Dispose();
                 ImMetadata.Dispose();
+                ImMetaSetter.Dispose();
 
                 MeshGen.Dispose();
                 meshRenderer.Dispose();

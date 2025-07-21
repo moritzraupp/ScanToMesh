@@ -236,4 +236,30 @@ namespace stm
             }
         }
     }
+
+    public class ImageMetadataSetter : PythonModuleObject
+    {
+        public ImageMetadataSetter()
+        {
+            string moduleName = "ImageIO";
+            string functionName = "set_metadata";
+
+            using (Py.GIL())
+            {
+                _module = Py.Import(moduleName);
+                _function = _module.GetAttr(functionName);
+            }
+        }
+
+        public void Set(PyObject image, string metadata)
+        {
+            if (image == null) return;
+            if (metadata == null) return;
+
+            using (Py.GIL())
+            {
+                _function.Invoke(image, new PyString(metadata));
+            }
+        }
+    }
 }

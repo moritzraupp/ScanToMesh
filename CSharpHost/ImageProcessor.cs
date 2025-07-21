@@ -23,9 +23,13 @@ namespace stm
         private string pythonPath;
         private bool _isValid = false;
 
+        private string _outString = "";
+
         public bool IsValid() { return _isValid; }
 
         public string GetPythonPath() { return pythonPath; }
+
+        public string OutString { get { return _outString; } }
 
         public void SetPythonPath(string pythonPath)
         {
@@ -81,6 +85,7 @@ namespace stm
             if (string.IsNullOrEmpty(pythonPath))
                 throw new InvalidOperationException("Python path is not set.");
 
+            _outString = $"[{name}]";
             var args = new List<PyObject>();
             foreach (var p in parameters)
             {
@@ -94,6 +99,8 @@ namespace stm
                     val = new PyString(p.value);
 
                 args.Add(val);
+
+                _outString += $"\n\t{p.name} = {p.value}";
             }
 
             PyObject processed = null;
