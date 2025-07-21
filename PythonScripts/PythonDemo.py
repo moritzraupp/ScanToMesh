@@ -13,7 +13,7 @@ import ImageIO as io
 from FileStack import FileStack
 import Rendering as ren
 
-stack = FileStack("D:\\Thesis\\data\\PP_20150928_15758 PM\\PP_w0", "tif")
+stack = FileStack("D:\\Thesis\\data\\PP_20150928_15758 PM\\PP_w0", [".tif"])
 print(stack)
 
 image = io.read_image_stack(stack, 1384-1024, 1384)

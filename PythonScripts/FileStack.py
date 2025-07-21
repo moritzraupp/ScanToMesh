@@ -2,7 +2,7 @@ import os
 import glob
 
 class FileStack:
-    def __init__(self, directory, extensions=None, sort_files=False):
+    def __init__(self, directory, extensions=[".tif"], sort_files=False):
         self.directory = directory
         self.extensions = extensions if extensions else []
         self.sort_files = sort_files
