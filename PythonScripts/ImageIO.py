@@ -39,6 +39,11 @@ def clone_metadata(from_image, to_image):
         to_image["ImageDescription"] = get_metadata(from_image)
 
 
+def set_metadata(image, metadata: str):
+    if image is None or metadata is None:
+        return
+    image["ImageDescription"] = metadata
+
 def get_image_info(image):
     size = tuple(image.GetBufferedRegion().GetSize())
     pixel_type, dimension = itk.template(image)[1]
